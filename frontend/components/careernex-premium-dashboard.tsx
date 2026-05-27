@@ -1,21 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type NavIcon = "dashboard" | "coach" | "resume" | "skills" | "roadmaps" | "progress" | "community" | "profile" | "settings";
 
 const navItems: { label: string; route: string; icon: NavIcon; hint: string }[] = [
-  { label: "Dashboard", route: "/", icon: "dashboard", hint: "Career command center" },
-  { label: "AI Career Coach", route: "/?view=ai-career-coach", icon: "coach", hint: "Guidance chat" },
-  { label: "Resume Analyzer", route: "/?view=resume-analyzer", icon: "resume", hint: "ATS scoring" },
-  { label: "Skill Gap Analysis", route: "/?view=skill-gap-analysis", icon: "skills", hint: "Missing skills" },
-  { label: "Learning Roadmaps", route: "/?view=learning-roadmaps", icon: "roadmaps", hint: "Weekly plans" },
-  { label: "Progress Tracking", route: "/?view=progress-tracking", icon: "progress", hint: "Analytics" },
-  { label: "Community", route: "/?view=community", icon: "community", hint: "Peer network" },
-  { label: "Profile", route: "/?view=profile", icon: "profile", hint: "Career identity" },
-  { label: "Settings", route: "/?view=settings", icon: "settings", hint: "Preferences" },
+  { label: "Dashboard", route: "/dashboard", icon: "dashboard", hint: "Career command center" },
+  { label: "AI Career Coach", route: "/ai-coach", icon: "coach", hint: "Guidance chat" },
+  { label: "Resume Analyzer", route: "/resume-analyzer", icon: "resume", hint: "ATS scoring" },
+  { label: "Skill Gap Analysis", route: "/skill-gap-analysis", icon: "skills", hint: "Missing skills" },
+  { label: "Learning Roadmaps", route: "/roadmaps", icon: "roadmaps", hint: "Weekly plans" },
+  { label: "Progress Tracking", route: "/progress", icon: "progress", hint: "Analytics" },
+  { label: "Community", route: "/community", icon: "community", hint: "Peer network" },
+  { label: "Profile", route: "/profile", icon: "profile", hint: "Career identity" },
+  { label: "Settings", route: "/profile", icon: "settings", hint: "Preferences" },
 ];
 
 function NavIcon({ name }: { name: NavIcon }) {
@@ -69,20 +71,22 @@ function SkeletonCard() {
   return <div className="h-36 animate-pulse rounded-3xl border border-white/10 bg-white/[0.06] shadow-2xl shadow-black/20" />;
 }
 
-function MetricCard({ label, value, detail, gradient, children }: { label: string; value: string; detail: string; gradient: string; children?: ReactNode }) {
+function MetricCard({ label, value, detail, gradient, href, children }: { label: string; value: string; detail: string; gradient: string; href: string; children?: ReactNode }) {
   return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl"
-    >
-      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${gradient}`} />
-      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl transition group-hover:bg-cyan-300/20" />
-      <p className="text-sm font-medium text-slate-400">{label}</p>
-      <p className="mt-3 text-3xl font-bold tracking-tight text-white">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-300">{detail}</p>
-      {children && <div className="relative mt-4">{children}</div>}
-    </motion.div>
+    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-cyan-300/70 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-3xl" aria-label={`Open ${label}`}>
+      <motion.div
+        whileHover={{ y: -6, scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl"
+      >
+        <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${gradient}`} />
+        <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl transition group-hover:bg-cyan-300/20" />
+        <p className="text-sm font-medium text-slate-400">{label}</p>
+        <p className="mt-3 text-3xl font-bold tracking-tight text-white">{value}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{detail}</p>
+        {children && <div className="relative mt-4">{children}</div>}
+      </motion.div>
+    </Link>
   );
 }
 
@@ -97,10 +101,11 @@ function WidgetShell({ title, eyebrow, children }: { title: string; eyebrow: str
 }
 
 export function CareerNexPremiumDashboard() {
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState("Dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const activeItem = useMemo(() => navItems.find((item) => item.route === pathname) ?? navItems[0], [pathname]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setLoading(false), 650);
@@ -147,15 +152,12 @@ export function CareerNexPremiumDashboard() {
             <span className={`mb-3 inline-flex rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200 ${collapsed ? "lg:hidden" : ""}`}>AI online</span>
             <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label="CareerNex AI primary navigation">
               {navItems.map((item) => {
-                const isActive = active === item.label;
+                const isActive = activeItem.label === item.label;
                 return (
-                  <a
+                  <Link
                     key={item.label}
                     href={item.route}
-                    onClick={() => {
-                      setActive(item.label);
-                      setMobileOpen(false);
-                    }}
+                    onClick={() => setMobileOpen(false)}
                     aria-current={isActive ? "page" : undefined}
                     title={collapsed ? item.label : undefined}
                     className={`group relative flex min-w-fit items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition-all lg:min-w-0 ${
@@ -172,7 +174,7 @@ export function CareerNexPremiumDashboard() {
                       <span className={`block truncate text-xs ${isActive ? "text-slate-600" : "text-slate-500 group-hover:text-slate-300"}`}>{item.hint}</span>
                     </span>
                     {isActive && <motion.span layoutId="activeNavPill" className="absolute inset-y-3 right-2 w-1 rounded-full bg-cyan-400" />}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>
@@ -199,8 +201,8 @@ export function CareerNexPremiumDashboard() {
                 <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl lg:text-7xl">Build your career roadmap with CareerNex AI.</h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">A premium student operating system for resumes, skill gaps, learning roadmaps, interview prep, and measurable career progress.</p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <button className="rounded-2xl bg-gradient-to-r from-cyan-300 to-violet-400 px-6 py-3 font-bold text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:scale-[1.02]">Ask AI Coach</button>
-                  <button className="rounded-2xl border border-white/15 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15">Analyze Resume</button>
+                  <Link href="/ai-coach" className="rounded-2xl bg-gradient-to-r from-cyan-300 to-violet-400 px-6 py-3 text-center font-bold text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:scale-[1.02]">Ask AI Coach</Link>
+                  <Link href="/resume-analyzer" className="rounded-2xl border border-white/15 bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/15">Analyze Resume</Link>
                 </div>
               </div>
               <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-5 shadow-2xl shadow-black/20">
@@ -217,16 +219,16 @@ export function CareerNexPremiumDashboard() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
           ) : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricCard label="Learning streak" value="18 days" detail="Top 7% of focused learners this month." gradient="from-orange-300 to-pink-500">
+              <MetricCard label="Learning streak" value="18 days" detail="Top 7% of focused learners this month." gradient="from-orange-300 to-pink-500" href="/progress">
                 <div className="flex gap-1.5">{Array.from({ length: 7 }).map((_, index) => <span key={index} className="h-8 flex-1 rounded-lg bg-gradient-to-t from-orange-500/50 to-pink-300" />)}</div>
               </MetricCard>
-              <MetricCard label="Resume score" value="86/100" detail="ATS-ready with 5 priority improvements." gradient="from-cyan-300 to-blue-500">
+              <MetricCard label="Resume score" value="86/100" detail="ATS-ready with 5 priority improvements." gradient="from-cyan-300 to-blue-500" href="/resume-analyzer">
                 <ResponsiveContainer width="100%" height={58}><PieChart><Pie data={[{ value: 86 }, { value: 14 }]} innerRadius={20} outerRadius={28} dataKey="value" startAngle={90} endAngle={-270}><Cell fill="#22d3ee" /><Cell fill="rgba(255,255,255,0.12)" /></Pie></PieChart></ResponsiveContainer>
               </MetricCard>
-              <MetricCard label="Skill velocity" value="+24%" detail="React and TypeScript momentum improved." gradient="from-emerald-300 to-teal-500">
+              <MetricCard label="Skill velocity" value="+24%" detail="React and TypeScript momentum improved." gradient="from-emerald-300 to-teal-500" href="/skill-gap-analysis">
                 <ResponsiveContainer width="100%" height={58}><AreaChart data={weekly}><Area type="monotone" dataKey="lessons" stroke="#34d399" fill="#34d399" fillOpacity={0.22} /></AreaChart></ResponsiveContainer>
               </MetricCard>
-              <MetricCard label="AI recommendations" value={String(recommendations.length)} detail="Personalized actions generated today." gradient="from-violet-300 to-fuchsia-500">
+              <MetricCard label="AI recommendations" value={String(recommendations.length)} detail="Personalized actions generated today." gradient="from-violet-300 to-fuchsia-500" href="/ai-coach">
                 <div className="space-y-2">{recommendations.slice(0, 2).map((item) => <p key={item} className="rounded-xl bg-white/[0.06] px-3 py-2 text-xs text-slate-200">{item}</p>)}</div>
               </MetricCard>
             </motion.div>
